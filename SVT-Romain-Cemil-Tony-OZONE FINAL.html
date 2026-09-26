@@ -1,0 +1,936 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>L'ozone, bouclier de la vie</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600&family=Hanken+Grotesk:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --void:#02030a; --ink:#eef2ff; --ink2:rgba(226,232,255,.76); --ink3:rgba(200,210,255,.52);
+  --glass:rgba(12,16,32,.55); --edge:rgba(255,255,255,.15);
+  --accent:#6cb4ff; --ozone:#5fdcff; --uvc:#7a35ff; --uvb:#a56bff; --uva:#dcc6ff; --oxy:#ff6b5b;
+  --f-display:'Fraunces',Georgia,'Times New Roman',serif;
+  --f-body:'Hanken Grotesk',system-ui,-apple-system,'Segoe UI',sans-serif;
+  --vh:1vh;
+  color-scheme:dark;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+}
+html{scroll-padding-top:env(safe-area-inset-top,0px);}
+*,*::before,*::after{box-sizing:inherit}
+body{margin:0;background:var(--void);color:var(--ink);font-family:var(--f-body);overflow-x:hidden;-webkit-font-smoothing:antialiased}
+sub{font-size:.72em;line-height:0}
+#gl{position:fixed;inset:0;width:100%;height:100%;z-index:0;display:block}
+.vignette{position:fixed;inset:0;z-index:1;pointer-events:none;background:radial-gradient(ellipse at 50% 45%,transparent 55%,rgba(0,0,0,.55) 100%)}
+#loader{position:fixed;inset:0;z-index:20;background:var(--void);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;color:var(--ink2);transition:opacity .8s}
+#loader.done{opacity:0;pointer-events:none}
+#loader .ring{width:38px;height:38px;border-radius:50%;border:2px solid rgba(255,255,255,.15);border-top-color:var(--ozone);animation:spin 1s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* en-tête */
+.top{position:fixed;top:env(safe-area-inset-top,0px);left:0;right:0;z-index:6;display:flex;justify-content:space-between;align-items:center;padding:16px clamp(16px,3vw,40px);pointer-events:none}
+.brand{font-family:var(--f-display);font-size:17px;font-weight:600;letter-spacing:.01em}
+.where{display:flex;flex-direction:column;align-items:flex-end;font-size:12.5px;color:var(--ink2);line-height:1.35;text-align:right}
+.where b{font-weight:600;color:var(--ink)}
+.progress{position:absolute;left:0;right:0;bottom:0;height:2px;background:rgba(255,255,255,.08)}
+.progress i{display:block;height:100%;width:100%;background:var(--accent);transform-origin:0 50%;transform:scaleX(0)}
+#dots{position:fixed;right:clamp(10px,1.4vw,22px);top:50%;transform:translateY(-50%);z-index:6;display:flex;flex-direction:column;gap:14px}
+#dots button{width:11px;height:11px;border-radius:50%;border:1.5px solid rgba(255,255,255,.55);background:transparent;padding:0;cursor:pointer;transition:.3s}
+#dots button.on{background:var(--accent);border-color:var(--accent);transform:scale(1.35)}
+#dots button:focus-visible{outline:2px solid #fff;outline-offset:3px}
+
+/* étiquettes 3D projetées */
+#labels{position:fixed;inset:0;z-index:4;pointer-events:none;overflow:hidden}
+.tag{position:absolute;left:0;top:0;opacity:0;padding:5px 10px;border-radius:999px;font-size:12px;font-weight:500;line-height:1;color:#fff;background:rgba(10,14,30,.7);border:1px solid rgba(255,255,255,.25);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);white-space:nowrap;will-change:transform,opacity}
+.tag.c{border-color:var(--uvc)} .tag.b{border-color:var(--uvb)} .tag.a{border-color:var(--uva)}
+.tag.oz{border-color:var(--ozone);color:#c9f4ff}
+.tag.warn{border-color:#ffb454;color:#ffe0b0}
+
+/* panneaux en verre */
+main{position:relative;z-index:5;pointer-events:none}
+.step{position:relative;height:calc(var(--vh)*100*var(--h))}
+.sticky{position:sticky;top:0;height:calc(var(--vh)*100);display:flex;align-items:center;padding:0 clamp(16px,5vw,80px)}
+.sticky.right{justify-content:flex-end}
+.panel{pointer-events:auto;width:min(470px,42vw);padding:clamp(18px,2.7vh,30px) clamp(18px,2vw,30px);border-radius:26px;
+  background:linear-gradient(160deg,rgba(255,255,255,.10),rgba(255,255,255,.03)),var(--glass);
+  backdrop-filter:blur(24px) saturate(150%);-webkit-backdrop-filter:blur(24px) saturate(150%);
+  border:1px solid var(--edge);box-shadow:0 30px 80px rgba(0,0,0,.45),inset 0 1px 0 rgba(255,255,255,.16);will-change:opacity,transform}
+.kick{display:flex;align-items:center;gap:10px;font-size:13px;font-weight:600;color:var(--accent);margin-bottom:10px}
+.kick .n{display:grid;place-items:center;width:24px;height:24px;border-radius:50%;border:1.5px solid var(--accent);font-size:12px}
+h1,h2{font-family:var(--f-display);font-weight:600;margin:0 0 .5em;letter-spacing:-.015em;line-height:1.08}
+h1{font-size:clamp(32px,5.6vh,56px)}
+h2{font-size:clamp(23px,3.5vh,35px)}
+.panel p{margin:0 0 .75em;color:var(--ink2);font-size:clamp(13px,1.75vh,15.2px);line-height:1.6}
+.panel p strong{color:var(--ink);font-weight:600}
+.small{font-size:12px!important;color:var(--ink3)!important}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin:.4em 0 .8em}
+.chip{padding:6px 11px;border-radius:999px;font-size:12px;border:1px solid var(--edge);background:rgba(255,255,255,.05);color:var(--ink2)}
+.toc{margin:.3em 0 .9em;padding:0;list-style:none;counter-reset:t;display:grid;gap:6px}
+.toc li{counter-increment:t;font-size:13.5px;color:var(--ink2);display:flex;gap:10px;align-items:baseline}
+.toc li::before{content:counter(t);font-family:var(--f-display);color:var(--accent);font-weight:600;min-width:1em}
+.hint{margin-top:.6em;font-size:12.5px;color:var(--ink3);display:flex;align-items:center;gap:8px}
+.hint::after{content:"";width:8px;height:8px;border-right:1.5px solid var(--ink3);border-bottom:1.5px solid var(--ink3);transform:rotate(45deg);animation:nudge 1.6s ease-in-out infinite}
+@keyframes nudge{50%{transform:translateY(5px) rotate(45deg)}}
+
+/* étape 2 */
+.eq{display:inline-block;margin:.2em 0 .6em;padding:8px 14px;border-radius:12px;background:rgba(255,255,255,.07);border:1px solid var(--edge);font-family:var(--f-display);font-size:18px;font-weight:600}
+.steps4{list-style:none;margin:.2em 0 .5em;padding:0;display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+.steps4 li{font-size:11.5px;color:var(--ink3);padding-top:7px;border-top:3px solid rgba(255,255,255,.14);transition:.3s}
+.steps4 li.on{color:var(--ink);border-top-color:var(--oxy)}
+.cap{min-height:3.4em}
+.legend{display:flex;flex-wrap:wrap;gap:12px;font-size:11.5px;color:var(--ink3)}
+.legend span{display:flex;align-items:center;gap:6px}
+.at{display:inline-block;width:11px;height:11px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#ff9a8c,#c62a1f);margin-right:-4px}
+.legend .at:last-child{margin-right:0}
+
+/* étape 3 */
+.uvlist{list-style:none;margin:.3em 0 .6em;padding:0;display:grid;gap:8px}
+.uvlist li{display:flex;gap:10px;padding:8px 10px;border-radius:12px;background:rgba(255,255,255,.04);opacity:.4;transition:.35s}
+.uvlist li.on{opacity:1;background:rgba(255,255,255,.08)}
+.uvlist i{flex:0 0 5px;border-radius:3px}
+.uvlist .c i{background:var(--uvc)} .uvlist .b i{background:var(--uvb)} .uvlist .a i{background:var(--uva)}
+.uvlist div{font-size:13px;color:var(--ink2);line-height:1.45}
+.uvlist b{color:var(--ink)}
+.uvlist span{display:block;font-size:12.5px;color:var(--ink3)}
+.fig{margin:.5em 0 0}
+.fig svg{display:block;width:100%;height:clamp(120px,21vh,190px)}
+.fig figcaption{font-size:11.5px;color:var(--ink3);margin-top:4px;line-height:1.4}
+
+/* étape 4 */
+.lesions{list-style:none;margin:.3em 0 .6em;padding:0;display:grid;gap:8px}
+.lesions li{padding:8px 10px;border-radius:12px;background:rgba(255,255,255,.04);opacity:.4;transition:.35s;font-size:13px;color:var(--ink2);line-height:1.45}
+.lesions li.on{opacity:1;background:rgba(255,255,255,.08)}
+.lesions b{color:var(--ink)}
+.bases{display:flex;gap:12px;font-size:11.5px;color:var(--ink3);flex-wrap:wrap}
+.bases span{display:flex;align-items:center;gap:5px}
+.bases i{width:10px;height:10px;border-radius:3px}
+
+/* étape 5 */
+.blocks{display:grid}
+.block{grid-area:1/1;opacity:0;transform:translateY(8px);transition:opacity .5s,transform .5s;pointer-events:none}
+.block.on{opacity:1;transform:none;pointer-events:auto}
+.block h3{font-family:var(--f-display);font-size:clamp(19px,2.8vh,26px);margin:0 0 .4em;font-weight:600}
+.recap{margin:0;padding-left:1.1em;color:var(--ink2);font-size:13.5px;line-height:1.55}
+.recap li{margin-bottom:.45em}
+.recap b{color:var(--ink)}
+.frise{margin-top:.9em}
+.rail{position:relative;height:4px;border-radius:2px;background:rgba(255,255,255,.14);margin:22px 4px 8px}
+.rail .fill{position:absolute;left:0;top:0;bottom:0;width:var(--p,17%);border-radius:2px;background:linear-gradient(90deg,#3ddbd9,var(--ozone))}
+.rail .pt{position:absolute;top:50%;width:12px;height:12px;margin:-6px 0 0 -6px;border-radius:50%;background:#0c1428;border:2px solid var(--ink3);transition:.3s}
+.rail .pt.on{background:var(--ozone);border-color:var(--ozone);box-shadow:0 0 12px var(--ozone)}
+.rail .pt em{position:absolute;bottom:14px;left:50%;transform:translateX(-50%);font-style:normal;font-size:11.5px;color:var(--ink2);white-space:nowrap}
+.p1{left:17.4%} .p2{left:87%}
+.ends{display:flex;justify-content:space-between;font-size:11px;color:var(--ink3)}
+
+@media (max-width:760px),(max-aspect-ratio:17/20){
+  .sticky{align-items:flex-end;padding-bottom:14px}
+  .panel{width:100%;max-height:calc(var(--vh)*58);overflow:hidden;border-radius:22px;padding:14px 16px}
+  #dots{display:none}
+  .fig svg{height:clamp(90px,16vh,130px)}
+  .where{font-size:11.5px}
+}
+@media (prefers-reduced-motion:reduce){.hint::after,#loader .ring{animation:none}}
+</style>
+</head>
+<body>
+<canvas id="gl" aria-hidden="true"></canvas>
+<div class="vignette"></div>
+<div id="loader"><div class="ring"></div><p>Préparation de la scène 3D</p></div>
+
+<header class="top">
+  <div class="brand">L'ozone et la vie</div>
+  <div class="where"><b id="whereNum">Étape 1 sur 5</b><span id="whereTxt">Vue depuis l'espace</span></div>
+  <div class="progress"><i id="bar"></i></div>
+</header>
+<nav id="dots" aria-label="Étapes de l'article"></nav>
+<div id="labels"></div>
+
+<main id="story">
+
+<!-- ÉTAPE 1 -->
+<section class="step" id="s1" style="--h:2"><div class="sticky left">
+<article class="panel" id="p1">
+  <div class="kick">Article scientifique de SVT</div>
+  <h1>L'ozone, bouclier de la vie</h1>
+  <p>Lorsqu'on regarde la Terre depuis l'espace, elle a l'aire vulnérable. Mais en réalité, une couche de gaz, l'<strong>atmosphère</strong>, la protège en permanence d'un danger invisible, les <strong>rayons ultraviolets</strong> (UV) du Soleil.</p>
+  <p>Comment l'atmosphère se créé, et pourquoi elle permis à la vie de sortir des océans ?</p>
+  <p>Composition de l'atmosphère :</p>
+  <div class="chips"><span class="chip">Troposphère : 0 à 10 km</span><span class="chip">Stratosphère : 10 à 55 km</span></div>
+  <ol class="toc">
+    <li>Origine et localisation de l'ozone</li>
+    <li>Effets de l'ozone sur les UV solaires</li>
+    <li>Effets des UV sur les êtres vivants</li>
+    <li>La vie sans ozone : le refuge des océans</li>
+  </ol>
+  <div class="hint">Faites défiler pour explorer</div>
+</article></div></section>
+
+<!-- ÉTAPE 2 -->
+<section class="step" id="s2" style="--h:4"><div class="sticky right">
+<article class="panel" id="p2">
+  <div class="kick"><span class="n">1</span>Origine et localisation de l'ozone</div>
+  <h2>Une molécule fabriquée par le Soleil</h2>
+  <p>L'ozone (O<sub>3</sub>) se forme dans la <strong>stratosphère</strong>. Elle est principalement présente entre 20 et 30 km d'altitude : c'est ce qu'on appel la <strong>couche d'ozone</strong>.</p>
+  <ol class="steps4" id="molSteps"><li class="on">Un UV frappe</li><li>Photolyse</li><li>Association</li><li>Ozone</li></ol>
+  <div class="eq" id="molEq">O<sub>2</sub> + UV → O + O</div>
+  <p class="cap" id="molCap">Un rayonnement UV du Soleil arrive sur une molécule de dioxygène (O<sub>2</sub>)</p>
+  <div class="legend"><span><i class="at"></i>Oxygène (O)</span><span><i class="at"></i><i class="at"></i>Dioxygène (O<sub>2</sub>)</span><span><i class="at"></i><i class="at"></i><i class="at"></i>Ozone (O<sub>3</sub>)</span></div>
+</article></div></section>
+
+<!-- ÉTAPE 3 -->
+<section class="step" id="s3" style="--h:3"><div class="sticky left">
+<article class="panel" id="p3">
+  <div class="kick"><span class="n">2</span>Effets de l'ozone sur les UV solaires</div>
+  <h2>Un filtre à ultraviolets</h2>
+  <p>Le Soleil émet trois familles d'UV, classées par longueur d'onde. Plus elle est courte, plus le rayonnement est dangereux.</p>
+  <p>La couche d'ozone absorbe certain UV :</p>
+  <ul class="uvlist" id="uvRows">
+    <li class="c"><i></i><div><b>UV-C</b> de 220 à 290 nm<span>Totalement absorbés : 0 % arrive au sol.</span></div></li>
+    <li class="b"><i></i><div><b>UV-B</b> de 290 à 318 nm<span>Filtrés à environ 95 % : environ 5 % arrive au sol.</span></div></li>
+    <li class="a"><i></i><div><b>UV-A</b> de 315 à 400 nm<span>Traversent l'ozone : environ 95 % arrive au sol.</span></div></li>
+  </ul>
+  <figure class="fig"><svg id="doc2" viewBox="0 0 320 244" role="img" aria-label="Schéma : répartition de l'ozone selon l'altitude et pourcentage des UV atteignant le sol"></svg>
+  <figcaption>Doc. 2 : l'ozone (courbe dorée) est le plus concentré vers 20 à 25 km. Il arrête les UV-C, presque tous les UV-B, mais laisse passer les UV-A.</figcaption></figure>
+</article></div></section>
+
+<!-- ÉTAPE 4 -->
+<section class="step" id="s4" style="--h:3"><div class="sticky right">
+<article class="panel" id="p4">
+  <div class="kick"><span class="n">3</span>Effets des UV sur les êtres vivants</div>
+  <h2>Quand les UV frappent l'ADN</h2>
+  <p>L'ADN, qui porte l'information génétique de chaque cellule, absorbe les UV. Cette énergie peut l'abîmer de trois façons :</p>
+  <ul class="lesions" id="lesions">
+    <li><b>Cassures d'ADN.</b> La chaîne se rompt.</li>
+    <li><b>Changement de nucléotides.</b> Une base est remplacée : c'est une mutation.</li>
+    <li><b>Déformation de l'ADN.</b> Deux thymines voisines (T) se soudent en un dimère de thymine.</li>
+  </ul>
+  <p><strong>L'accumulation de mutations</strong> provoque un risque de cancer ou la mort de la cellule, selon la dose d'UV reçue.</p>
+  <div class="bases"><span><i style="background:#5fd17a"></i>A adénine</span><span><i style="background:#ffb454"></i>T thymine</span><span><i style="background:#5aa9ff"></i>G guanine</span><span><i style="background:#ff7ab8"></i>C cytosine</span></div>
+</article></div></section>
+
+<!-- ÉTAPE 5 -->
+<section class="step" id="s5" style="--h:4"><div class="sticky left">
+<article class="panel" id="p5">
+  <div class="kick"><span class="n">4</span>La vie sans ozone : le refuge des océans</div>
+  <div class="blocks">
+    <div class="block on" id="b1">
+      <h3>Il y a 3,8 milliards d'années</h3>
+      <p>La vie apparaît dans les océans. L'atmosphère ne contient <strong>pas encore d'ozone</strong>, mais l'eau de mer absorbe les UV : dès <strong>5 mètres</strong> de profondeur, il n'en reste plus. Les cellules primitives vivent à l'abri dans les profondeurs de l'océan.</p>
+      <figure class="fig"><svg id="doc4" viewBox="0 0 340 204" role="img" aria-label="Profondeur à laquelle chaque rayonnement disparaît dans l'eau de mer"></svg>
+      <figcaption>Doc. 4 : quand un rayonnement disparaît, l'eau l'a absorbé. Les UV s'éteignent vers 5 m.</figcaption></figure>
+    </div>
+    <div class="block" id="b2">
+      <h3>Il y a 600 millions d'années</h3>
+      <p>La <strong>couche d'ozone</strong> est enfin complète. Elle arrête les UV les plus dangereux (UV-C / UV-B) avant même qu'ils n'atteignent la surface de l'eau.</p>
+      <p>Les êtres vivants n'ont plus besoin de la protection de l'eau. Ils peuvent <strong>sortir des océans et se developer sur la terre ferme</strong>.</p>
+    </div>
+    <div class="block" id="b3">
+      <h3>En résumé</h3>
+      <ol class="recap">
+        <li><b>Origine :</b> le Soleil casse O<sub>2</sub>, les atomes libérés forment O<sub>3</sub>, surtout entre 20 et 30 km.</li>
+        <li><b>Filtre :</b> l'ozone arrête les UV-C et environ 95 % des UV-B.</li>
+        <li><b>Danger :</b> les UV abîment l'ADN et peuvent tuer les cellules.</li>
+        <li><b>Conclusion :</b> d'abord protégée par l'eau, la vie a pu conquérir les continents grâce à l'ozone.</li>
+      </ol>
+    </div>
+  </div>
+  <div class="frise" id="frise"><div class="rail"><i class="fill"></i><span class="pt p1"><em>3,8 Ga</em></span><span class="pt p2"><em>600 Ma</em></span></div>
+  <div class="ends"><span>Terre : 4,6 Ga</span><span>Aujourd'hui</span></div></div>
+</article></div></section>
+
+</main>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+<script>
+(function(){
+'use strict';
+function fail(msg){var l=document.getElementById('loader');l.innerHTML='<p>'+msg+'</p>';}
+if(!window.THREE||!window.gsap||!window.ScrollTrigger){fail('Les bibliothèques 3D n\u2019ont pas pu être chargées. Vérifiez votre connexion.');return;}
+gsap.registerPlugin(ScrollTrigger);
+ScrollTrigger.config({ignoreMobileResize:true});
+requestAnimationFrame(function(){setTimeout(init,40);});
+
+function init(){
+var PI=Math.PI;
+var root=document.documentElement;
+var clamp=function(x,a,b){a=a===undefined?0:a;b=b===undefined?1:b;return Math.min(b,Math.max(a,x));};
+var mix=function(a,b,t){return a+(b-a)*t;};
+var ease=function(t){return t*t*(3-2*t);};
+var seg=function(p,a,b){return clamp((p-a)/(b-a));};
+var sstep=function(a,b,x){return ease(clamp((x-a)/(b-a)));};
+var seed=12345;var rand=function(){seed=(seed*16807)%2147483647;return (seed-1)/2147483646;};
+var T=0;
+
+/* ---------- rendu ---------- */
+var canvas=document.getElementById('gl');
+var renderer;
+try{renderer=new THREE.WebGLRenderer({canvas:canvas,antialias:true,powerPreference:'high-performance'});}
+catch(e){fail('Votre navigateur ne permet pas d\u2019afficher la scène 3D (WebGL indisponible).');return;}
+renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,2));
+var scene=new THREE.Scene();
+var bgSpace=new THREE.Color(0x02030a),bgDna=new THREE.Color(0x0b0724),bgSea=new THREE.Color(0x050d20);
+scene.background=new THREE.Color(0x02030a);
+var camera=new THREE.PerspectiveCamera(40,1,0.1,400);
+scene.add(camera);
+var sun=new THREE.DirectionalLight(0xfff4e0,1.5);sun.position.set(6,3,7);scene.add(sun);
+scene.add(new THREE.AmbientLight(0x4a5f8a,0.55));
+var camLight=new THREE.PointLight(0xffffff,0.75);camLight.position.set(1.5,2,-2);camera.add(camLight);
+
+var W=innerWidth,H=innerHeight,mob=false,stageK=1,lastW=0,lastH=0;
+function resize(){
+  var nw=window.innerWidth,nh=window.innerHeight;
+  if(lastW&&nw===lastW&&Math.abs(nh-lastH)<150)return;
+  lastW=nw;lastH=nh;W=nw;H=nh;
+  mob=(W/H)<0.85;
+  renderer.setSize(W,H,false);
+  camera.aspect=W/H;camera.fov=mob?58:40;camera.updateProjectionMatrix();
+  stageK=mob?0.62:clamp((W/H)/1.7,0.62,1);
+  root.style.setProperty('--vh',(H/100)+'px');
+}
+window.addEventListener('resize',resize);resize();
+
+/* ---------- utilitaires 3D ---------- */
+function glowTex(){var c=document.createElement('canvas');c.width=c.height=128;var g=c.getContext('2d');
+  var gr=g.createRadialGradient(64,64,0,64,64,64);
+  gr.addColorStop(0,'rgba(255,255,255,1)');gr.addColorStop(.25,'rgba(255,255,255,.55)');gr.addColorStop(.6,'rgba(255,255,255,.12)');gr.addColorStop(1,'rgba(255,255,255,0)');
+  g.fillStyle=gr;g.fillRect(0,0,128,128);return new THREE.CanvasTexture(c);}
+var GLOW=glowTex();
+function makeSprite(color,size,op){var s=new THREE.Sprite(new THREE.SpriteMaterial({map:GLOW,color:color,blending:THREE.AdditiveBlending,transparent:true,depthWrite:false,opacity:op===undefined?1:op}));s.scale.set(size,size,1);s.userData.noFade=true;return s;}
+function makePoints(arr,size,color,op){var g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.BufferAttribute(arr,3));
+  var p=new THREE.Points(g,new THREE.PointsMaterial({map:GLOW,size:size,color:color,transparent:true,opacity:op===undefined?1:op,depthWrite:false,blending:THREE.AdditiveBlending,sizeAttenuation:true}));p.frustumCulled=false;return p;}
+function setFade(rootObj,a){
+  if(rootObj.userData._f===a)return;rootObj.userData._f=a;rootObj.visible=a>0.004;
+  rootObj.traverse(function(o){
+    if(o.userData.noFade||!o.material)return;
+    var ms=Array.isArray(o.material)?o.material:[o.material];
+    ms.forEach(function(m){
+      var isU=m.uniforms&&m.uniforms.uOpacity;
+      if(m.userData.base===undefined)m.userData.base=isU?1:m.opacity;
+      if(isU)m.uniforms.uOpacity.value=m.userData.base*a;else m.opacity=m.userData.base*a;
+    });
+  });
+}
+function noCull(o){o.traverse(function(c){c.frustumCulled=false;});}
+function textSprite(txt,color){var w=256,h=64,c=document.createElement('canvas');c.width=w;c.height=h;var g=c.getContext('2d');
+  g.font='600 30px system-ui, sans-serif';g.fillStyle=color||'#cfe7ff';g.textBaseline='middle';g.fillText(txt,4,h/2);
+  var s=new THREE.Sprite(new THREE.SpriteMaterial({map:new THREE.CanvasTexture(c),transparent:true,depthTest:false}));
+  s.center.set(0,0.5);s.scale.set(w/190,h/190,1);return s;}
+
+/* bruit 3D pour la texture de la Terre */
+function h3(x,y,z){var h=Math.imul(x,374761393)^Math.imul(y,668265263)^Math.imul(z,1274126177);h=Math.imul(h^(h>>>13),1274126177);h^=h>>>16;return (h>>>0)/4294967295;}
+function vnoise(x,y,z){var xi=Math.floor(x),yi=Math.floor(y),zi=Math.floor(z),xf=x-xi,yf=y-yi,zf=z-zi;
+  var u=xf*xf*(3-2*xf),v=yf*yf*(3-2*yf),w=zf*zf*(3-2*zf);
+  var l=function(a,b,t){return a+(b-a)*t;};
+  return l(l(l(h3(xi,yi,zi),h3(xi+1,yi,zi),u),l(h3(xi,yi+1,zi),h3(xi+1,yi+1,zi),u),v),l(l(h3(xi,yi,zi+1),h3(xi+1,yi,zi+1),u),l(h3(xi,yi+1,zi+1),h3(xi+1,yi+1,zi+1),u),v),w);}
+function fbm(x,y,z,o){var a=.5,f=1,s=0;for(var i=0;i<o;i++){s+=a*vnoise(x*f,y*f,z*f);f*=2.03;a*=.5;}return s;}
+
+function makeEarthTexture(){
+  var TW=1024,TH=512,c=document.createElement('canvas');c.width=TW;c.height=TH;
+  var g=c.getContext('2d'),img=g.createImageData(TW,TH),d=img.data;
+  var cl=new Float32Array(TW),sl=new Float32Array(TW);
+  for(var x=0;x<TW;x++){var lon=((x+.5)/TW)*PI*2-PI;cl[x]=Math.cos(lon);sl[x]=Math.sin(lon);}
+  for(var y=0;y<TH;y++){
+    var lat=(0.5-(y+.5)/TH)*PI,cy=Math.cos(lat),Y=Math.sin(lat);
+    for(var xx=0;xx<TW;xx++){
+      var X=cy*cl[xx],Z=cy*sl[xx];
+      var n=fbm(X*1.7+11.3,Y*1.7+4.1,Z*1.7+7.7,5);
+      var m=fbm(X*3.1+50,Y*3.1+50,Z*3.1+50,3);
+      var r,gg,b;
+      if(Math.abs(Y)>0.94+(n-0.5)*0.12){r=238;gg=244;b=250;}
+      else if(n>0.535){
+        var e=clamp((n-0.535)/0.2);
+        var dry=clamp((1.4-Math.abs(Y)*2.2+(m-0.5)*1.2)*0.9-0.25);
+        r=mix(58,190,dry);gg=mix(112,164,dry);b=mix(52,104,dry);
+        var mo=clamp((e-0.55)*2);r=mix(r,112,mo);gg=mix(gg,100,mo);b=mix(b,88,mo);
+      }else{
+        var sh=clamp((n-0.44)/0.095);sh=sh*sh;
+        r=mix(7,36,sh);gg=mix(32,120,sh);b=mix(78,178,sh);
+      }
+      var i=(y*TW+xx)*4;d[i]=r;d[i+1]=gg;d[i+2]=b;d[i+3]=255;
+    }
+  }
+  g.putImageData(img,0,0);var t=new THREE.CanvasTexture(c);t.anisotropy=4;return t;
+}
+function makeCloudTexture(){
+  var TW=512,TH=256,c=document.createElement('canvas');c.width=TW;c.height=TH;
+  var g=c.getContext('2d'),img=g.createImageData(TW,TH),d=img.data;
+  for(var y=0;y<TH;y++){
+    var lat=(0.5-(y+.5)/TH)*PI,cy=Math.cos(lat),Y=Math.sin(lat);
+    for(var x=0;x<TW;x++){
+      var lon=((x+.5)/TW)*PI*2-PI;
+      var n=fbm(cy*Math.cos(lon)*2.6+90,Y*2.6+90,cy*Math.sin(lon)*2.6+90,4);
+      var a=clamp((n-0.5)/0.22);var i=(y*TW+x)*4;d[i]=255;d[i+1]=255;d[i+2]=255;d[i+3]=a*235;
+    }
+  }
+  g.putImageData(img,0,0);return new THREE.CanvasTexture(c);
+}
+
+/* ---------- espace : étoiles, Terre, atmosphère ---------- */
+var spaceGroup=new THREE.Group();scene.add(spaceGroup);
+var starArr=new Float32Array(2600*3);
+for(var i=0;i<2600;i++){var rr=80+rand()*60,u=rand()*2-1,tt=rand()*PI*2,s=Math.sqrt(1-u*u);
+  starArr[i*3]=rr*s*Math.cos(tt);starArr[i*3+1]=rr*u;starArr[i*3+2]=rr*s*Math.sin(tt);}
+var stars=makePoints(starArr,0.6,0xffffff,0.85);spaceGroup.add(stars);
+
+var earthGroup=new THREE.Group();spaceGroup.add(earthGroup);
+var pivot=new THREE.Group();pivot.rotation.x=-0.12;earthGroup.add(pivot);
+var earth=new THREE.Mesh(new THREE.SphereGeometry(2,96,96),new THREE.MeshPhongMaterial({map:makeEarthTexture(),shininess:14,specular:new THREE.Color(0x223344),transparent:true}));
+pivot.add(earth);
+var clouds=new THREE.Mesh(new THREE.SphereGeometry(2.025,64,64),new THREE.MeshPhongMaterial({map:makeCloudTexture(),transparent:true,opacity:0.85,depthWrite:false}));
+pivot.add(clouds);
+
+var FRES_VS='varying vec3 vN;varying vec3 vV;void main(){vN=normalize(normalMatrix*normal);vec4 mv=modelViewMatrix*vec4(position,1.0);vV=normalize(-mv.xyz);gl_Position=projectionMatrix*mv;}';
+function fresMat(color,fs,side){return new THREE.ShaderMaterial({uniforms:{uColor:{value:new THREE.Color(color)},uOpacity:{value:1}},vertexShader:FRES_VS,fragmentShader:fs,transparent:true,blending:THREE.AdditiveBlending,depthWrite:false,side:side});}
+var rim=new THREE.Mesh(new THREE.SphereGeometry(2.06,64,64),fresMat(0x5aa8ff,'uniform vec3 uColor;uniform float uOpacity;varying vec3 vN;varying vec3 vV;void main(){float f=pow(1.0-abs(dot(vN,vV)),3.0);gl_FragColor=vec4(uColor,f*0.9*uOpacity);}',THREE.FrontSide));
+earthGroup.add(rim);
+var halo=new THREE.Mesh(new THREE.SphereGeometry(2.5,64,64),fresMat(0x4d9bff,'uniform vec3 uColor;uniform float uOpacity;varying vec3 vN;varying vec3 vV;void main(){float d=abs(dot(vN,vV));float f=pow(clamp(d/0.6,0.0,1.0),2.2);gl_FragColor=vec4(uColor,f*0.85*uOpacity);}',THREE.BackSide));
+earthGroup.add(halo);
+
+/* couche d'ozone : coque + nuage de molécules O3 entre 2,14 et 2,58 */
+var ozoneGroup=new THREE.Group();spaceGroup.add(ozoneGroup);
+ozoneGroup.add(new THREE.Mesh(new THREE.SphereGeometry(2.36,64,64),fresMat(0x5fdcff,'uniform vec3 uColor;uniform float uOpacity;varying vec3 vN;varying vec3 vV;void main(){float f=pow(1.0-abs(dot(vN,vV)),2.0);gl_FragColor=vec4(uColor,(f*0.55+0.04)*uOpacity);}',THREE.FrontSide)));
+var ozArr=new Float32Array(7000*3);
+for(var k=0;k<7000;k++){var r3=2.14+rand()*0.44,u3=rand()*2-1,t3=rand()*PI*2,s3=Math.sqrt(1-u3*u3);
+  ozArr[k*3]=r3*s3*Math.cos(t3);ozArr[k*3+1]=r3*u3;ozArr[k*3+2]=r3*s3*Math.sin(t3);}
+ozoneGroup.add(makePoints(ozArr,0.04,0x7fe6ff,0.9));
+
+/* ---------- faisceaux UV (étape 3) ---------- */
+var uvGroup=new THREE.Group();scene.add(uvGroup);
+var BEAM_VS='varying vec2 vUv;varying vec3 vW;void main(){vUv=uv;vec4 w=modelMatrix*vec4(position,1.0);vW=w.xyz;gl_Position=projectionMatrix*viewMatrix*w;}';
+var BEAM_FS='uniform vec3 uColor;uniform float uTime,uHead,uTrans,uRTop,uRBot,uOpacity,uGain;varying vec2 vUv;varying vec3 vW;'+
+'void main(){float r=length(vW.xy);float Tt=mix(uTrans,1.0,smoothstep(uRBot,uRTop,r));'+
+'float edge=pow(clamp(1.0-abs(vUv.x-0.5)*2.0,0.0,1.0),1.6);float core=pow(edge,3.0);'+
+'float streak=0.7+0.3*sin(vW.y*16.0+uTime*7.0);float head=smoothstep(uHead-0.02,uHead+0.35,vW.y);'+
+'float ground=smoothstep(1.995,2.03,r);float a=(edge*0.55+core*0.9)*streak*head*ground*Tt*uGain*uOpacity;'+
+'gl_FragColor=vec4(uColor*(1.0+core*0.6),a);}';
+var beamDefs=[
+  {k:'uvC',x:-0.8,col:0x7a35ff,trans:0.0,rBot:2.36,gain:1.25,lab:'UV-C',cls:'c',res:'0 %'},
+  {k:'uvB',x:-0.1,col:0xa56bff,trans:0.05,rBot:2.14,gain:1.15,lab:'UV-B',cls:'b',res:'≈ 5 %'},
+  {k:'uvA',x:0.6,col:0xdcc6ff,trans:0.95,rBot:2.14,gain:1.0,lab:'UV-A',cls:'a',res:'≈ 95 %'}];
+var beams=beamDefs.map(function(d){
+  var mat=new THREE.ShaderMaterial({uniforms:{uColor:{value:new THREE.Color(d.col)},uTime:{value:0},uHead:{value:5.6},uTrans:{value:d.trans},uRTop:{value:2.58},uRBot:{value:d.rBot},uOpacity:{value:0},uGain:{value:d.gain}},
+    vertexShader:BEAM_VS,fragmentShader:BEAM_FS,transparent:true,blending:THREE.AdditiveBlending,depthWrite:false,side:THREE.DoubleSide});
+  var m=new THREE.Mesh(new THREE.PlaneGeometry(0.34,3.7),mat);m.position.set(d.x,3.65,0);m.frustumCulled=false;uvGroup.add(m);
+  return {d:d,mat:mat};
+});
+var flareDefs=[
+  {b:0,r:2.40,col:0x9ff0ff,size:0.7,g:1},{b:1,r:2.22,col:0x9ff0ff,size:0.6,g:1},
+  {b:1,r:2.02,col:0xb98cff,size:0.28,g:0.5},{b:2,r:2.02,col:0xe9dcff,size:0.75,g:1}];
+var flares=flareDefs.map(function(f){var sp=makeSprite(f.col,f.size,0);var x=beamDefs[f.b].x;sp.position.set(x,Math.sqrt(f.r*f.r-x*x),0.02);uvGroup.add(sp);return {f:f,sp:sp,yc:sp.position.y};});
+
+/* ---------- état global piloté par le scroll ---------- */
+var S={cp:new THREE.Vector3(0,0.5,9.6),cl:new THREE.Vector3(0,0,0),shiftX:-0.17,
+  earthFade:1,ozone:0,mol:0,molP:0,uv:0,uvC:0,uvB:0,uvA:0,
+  dna:0,dphi:-0.9,d1:0,d2:0,d3:0,cell:0,b4:0,b5:0,
+  sea:0,rayGain:0,seaY:0,ozoneForm:0,land:0,frise:17.4};
+
+/* ---------- étiquettes HTML projetées ---------- */
+var labelsRoot=document.getElementById('labels');var labels=[];
+function addLabel(html,cls,getPos,getVis){var el=document.createElement('div');el.className='tag '+(cls||'');el.innerHTML=html;labelsRoot.appendChild(el);
+  var l={el:el,getPos:getPos,getVis:getVis,v:new THREE.Vector3(),on:false};labels.push(l);return l;}
+function updateLabels(){
+  for(var i=0;i<labels.length;i++){var l=labels[i];var vis=l.getVis();
+    if(vis<0.02){if(l.on){l.el.style.opacity=0;l.on=false;}continue;}
+    l.getPos(l.v);l.v.project(camera);
+    var x=(l.v.x*0.5+0.5)*W,y=(-l.v.y*0.5+0.5)*H;
+    l.el.style.transform='translate('+x.toFixed(1)+'px,'+y.toFixed(1)+'px) translate(-50%,-125%)';
+    l.el.style.opacity=vis.toFixed(3);l.on=true;}
+}
+
+/* étiquettes des faisceaux UV */
+beams.forEach(function(b){
+  var d=b.d;
+  addLabel(d.lab,d.cls,function(v){v.set(d.x,3.25,0);},function(){return S.uv*S.earthFade*sstep(0.02,0.15,S[d.k]);});
+  addLabel(d.res+' au sol',d.cls,function(v){v.set(d.x,1.72,0);},function(){return S.uv*S.earthFade*sstep(0.93,1,S[d.k]);});
+});
+addLabel('Couche d\u2019ozone',"oz",function(v){v.set(1.0,2.5,0);},function(){return S.uv*S.earthFade*sstep(0.3,0.8,S.uvC);});
+
+/* ---------- stade moléculaire (étape 2) ---------- */
+var molGroup=new THREE.Group();camera.add(molGroup);molGroup.position.set(0,0.6,-6);
+var backC=document.createElement('canvas');backC.width=backC.height=128;
+(function(){var g=backC.getContext('2d'),gr=g.createRadialGradient(64,64,0,64,64,64);gr.addColorStop(0,'rgba(0,0,10,.62)');gr.addColorStop(1,'rgba(0,0,10,0)');g.fillStyle=gr;g.fillRect(0,0,128,128);})();
+var backdrop=new THREE.Sprite(new THREE.SpriteMaterial({map:new THREE.CanvasTexture(backC),transparent:true,depthTest:false}));
+backdrop.scale.set(9,7,1);backdrop.position.set(0,0,-0.5);backdrop.renderOrder=-5;molGroup.add(backdrop);
+
+var atomGeo=new THREE.SphereGeometry(0.27,32,32);
+var RED=new THREE.Color(0xe0392e),TEAL=new THREE.Color(0x5fdcff),EMI0=new THREE.Color(0x3a0603),EMI1=new THREE.Color(0x0a3a4a);
+function mkAtom(){var m=new THREE.Mesh(atomGeo,new THREE.MeshPhongMaterial({color:RED.clone(),emissive:EMI0.clone(),shininess:90,specular:0xffd0c0,transparent:true}));molGroup.add(m);return m;}
+var A0=mkAtom(),A1=mkAtom(),B0=mkAtom(),B1=mkAtom(),C0=mkAtom(),C1=mkAtom();
+var atoms=[A0,A1,B0,B1,C0,C1];
+var flash=makeSprite(0xd9c2ff,1,0);molGroup.add(flash);
+var halo1=makeSprite(0x5fdcff,2,0),halo2=makeSprite(0x5fdcff,2,0);molGroup.add(halo1);molGroup.add(halo2);
+
+var PN=36;var ph2Arr=new Float32Array(PN*3);var ph2=makePoints(ph2Arr,0.17,0xb388ff,0);ph2.userData.noFade=true;molGroup.add(ph2);
+var ph2Head=makeSprite(0xe6d6ff,0.55,0);molGroup.add(ph2Head);
+var P2SRC=new THREE.Vector3(-3.4,2.3,0),P2DST=new THREE.Vector3(-1.78,0.28,0);
+var p2d=P2DST.clone().sub(P2SRC),p2len=p2d.length();p2d.normalize();var p2perp=new THREE.Vector3(-p2d.y,p2d.x,0);
+
+molGroup.traverse(function(o){
+  if(o.material&&o!==backdrop){o.material.depthTest=false;o.renderOrder=10;}
+});
+
+atoms.forEach(function(a,i){a.renderOrder=20+i;});
+flash.renderOrder=40;
+ph2Head.renderOrder=41;
+
+var c1=new THREE.Vector3(0.95,1.25,0),c2=new THREE.Vector3(0.95,-1.25,0);
+function lp(a,b,t){return [mix(a[0],b[0],t),mix(a[1],b[1],t)];}
+function updateMol(){
+  var f=S.mol,p=S.molP;
+  molGroup.visible=f>0.004;if(!molGroup.visible){setFade(molGroup,0);return;}
+  molGroup.scale.setScalar(stageK*(0.85+0.15*f));
+  setFade(molGroup,f);
+  var appear=ease(seg(p,0,0.06)),split=ease(seg(p,0.27,0.46)),bind=ease(seg(p,0.5,0.78)),bApp=ease(seg(p,0.42,0.5)),fin=ease(seg(p,0.78,0.95));
+  var bob=Math.sin(T*2)*0.02*fin;
+  var a0=lp([-1.6,0.17],[-0.35,1.25],split);a0=lp(a0,[c1.x-0.34,c1.y-0.12],bind);
+  var a1=lp([-1.6,-0.17],[-0.35,-1.25],split);a1=lp(a1,[c2.x-0.34,c2.y+0.12],bind);
+  A0.position.set(a0[0],a0[1]+bob,0);A1.position.set(a1[0],a1[1]-bob,0);
+  var b0=lp([3.3,1.42],[c1.x,c1.y+0.15],bind),b1=lp([3.3,1.08],[c1.x+0.34,c1.y-0.12],bind);
+  var q0=lp([3.3,-1.08],[c2.x,c2.y-0.15],bind),q1=lp([3.3,-1.42],[c2.x+0.34,c2.y+0.12],bind);
+  B0.position.set(b0[0],b0[1]+bob,0);B1.position.set(b1[0],b1[1]+bob,0);C0.position.set(q0[0],q0[1]-bob,0);C1.position.set(q1[0],q1[1]-bob,0);
+  A0.scale.setScalar(appear);A1.scale.setScalar(appear);
+  [B0,B1,C0,C1].forEach(function(a){a.scale.setScalar(bApp);});
+  atoms.forEach(function(a){a.material.color.copy(RED).lerp(TEAL,fin*0.8);a.material.emissive.copy(EMI0).lerp(EMI1,fin);});
+  /* photon UV */
+  var h=ease(seg(p,0.08,0.25)),phOp=sstep(0.06,0.1,p)*(1-sstep(0.24,0.27,p))*f;
+  for(var j=0;j<PN;j++){var u=j/(PN-1),s=h*p2len-u*1.5;
+    if(s<0||h<=0){ph2Arr[j*3]=ph2Arr[j*3+1]=ph2Arr[j*3+2]=999;continue;}
+    var w=Math.sin(s*13-T*9)*0.11*(1-u*0.6);
+    ph2Arr[j*3]=P2SRC.x+p2d.x*s+p2perp.x*w;ph2Arr[j*3+1]=P2SRC.y+p2d.y*s+p2perp.y*w;ph2Arr[j*3+2]=0;}
+  ph2.geometry.attributes.position.needsUpdate=true;ph2.material.opacity=phOp;
+  ph2Head.position.set(P2SRC.x+p2d.x*h*p2len,P2SRC.y+p2d.y*h*p2len,0);ph2Head.material.opacity=phOp;
+  var fl=seg(p,0.25,0.31)*(1-seg(p,0.31,0.4));
+  flash.position.set(-1.6,0,0.1);flash.scale.setScalar(1+2.2*fl);flash.material.opacity=fl*f;
+  halo1.position.set(c1.x,c1.y,-0.2);halo2.position.set(c2.x,c2.y,-0.2);
+  var hs=mix(1.2,2.7,fin);halo1.scale.set(hs,hs,1);halo2.scale.set(hs,hs,1);halo1.material.opacity=halo2.material.opacity=fin*0.55*f;
+}
+function mp(x,y){return function(v){molGroup.localToWorld(v.set(x,y,0));};}
+addLabel('O<sub>2</sub>','oz',mp(-1.6,0.75),function(){return S.mol*sstep(0.04,0.1,S.molP)*(1-sstep(0.27,0.32,S.molP));});
+addLabel('O','warn',mp(-0.35,1.75),function(){return S.mol*sstep(0.4,0.46,S.molP)*(1-sstep(0.5,0.56,S.molP));});
+addLabel('O','warn',mp(-0.35,-0.75),function(){return S.mol*sstep(0.4,0.46,S.molP)*(1-sstep(0.5,0.56,S.molP));});
+addLabel('O<sub>3</sub> ozone','oz',mp(0.95,1.95),function(){return S.mol*sstep(0.8,0.9,S.molP);});
+addLabel('O<sub>3</sub> ozone','oz',mp(0.95,-0.55),function(){return S.mol*sstep(0.8,0.9,S.molP);});
+
+/* ---------- ADN (étape 4) ---------- */
+var dnaGroup=new THREE.Group();camera.add(dnaGroup);dnaGroup.position.set(0,0,-6);
+var dnaCore=new THREE.Group();dnaGroup.add(dnaCore);
+var helix=new THREE.Group();dnaCore.add(helix);
+var N=26,DY=0.17,RAD=0.62,TWST=0.52,I0=14,I2=21,I3=7;
+var BASECOL={A:new THREE.Color(0x5fd17a),T:new THREE.Color(0xffb454),G:new THREE.Color(0x5aa9ff),C:new THREE.Color(0xff7ab8)};
+var COMP={A:'T',T:'A',G:'C',C:'G'};
+var s0=[];for(var q=0;q<N;q++)s0.push('ATGC'.charAt(Math.floor(rand()*4)));
+s0[I0-1]='G';s0[I0]='T';s0[I0+1]='T';s0[I0+2]='C';s0[I3]='A';
+var s1=s0.map(function(b){return COMP[b];});
+var dnaMat=function(){return new THREE.MeshPhongMaterial({color:0xffffff,shininess:70,transparent:false});};
+var bbS=new THREE.InstancedMesh(new THREE.SphereGeometry(0.085,14,14),dnaMat(),2*N);
+var bbB=new THREE.InstancedMesh(new THREE.CylinderGeometry(0.03,0.03,1,8),dnaMat(),2*(N-1));
+var rungs=new THREE.InstancedMesh(new THREE.CylinderGeometry(0.048,0.048,1,8),dnaMat(),2*N);
+[bbS,bbB,rungs].forEach(function(m){m.instanceMatrix.setUsage(THREE.DynamicDrawUsage);helix.add(m);});
+var C_S0=new THREE.Color(0x7ec8ff),C_S1=new THREE.Color(0xb890ff);
+for(var i2=0;i2<N;i2++){bbS.setColorAt(i2,C_S0);bbS.setColorAt(N+i2,C_S1);rungs.setColorAt(2*i2,BASECOL[s0[i2]]);rungs.setColorAt(2*i2+1,BASECOL[s1[i2]]);}
+for(var i3=0;i3<N-1;i3++){bbB.setColorAt(i3,C_S0);bbB.setColorAt(N-1+i3,C_S1);}
+var bridge=new THREE.Mesh(new THREE.CylinderGeometry(0.06,0.06,1,10),new THREE.MeshBasicMaterial({color:0xffe066,transparent:true,opacity:0}));bridge.userData.noFade=true;helix.add(bridge);
+bridge.material.depthWrite=false;
+var gBreak=makeSprite(0xff8a8a,0.9,0),gMut=makeSprite(0xffe066,0.9,0),gDim=makeSprite(0xffb454,0.9,0);helix.add(gBreak);helix.add(gMut);helix.add(gDim);
+
+var P0=[],P1=[],Q0=[],Q1=[],BM0=[];
+for(var z=0;z<N;z++){P0.push(new THREE.Vector3());P1.push(new THREE.Vector3());Q0.push(new THREE.Vector3());Q1.push(new THREE.Vector3());BM0.push(new THREE.Vector3());}
+function pt(s,i,rad,out){
+  var th=i*TWST+(s?PI:0),y=(i-(N-1)/2)*DY,r=rad;
+  var g=Math.exp(-Math.pow(i-(I0+0.5),2)/1.5);
+  if(s===0){var yc=(I0+0.5-(N-1)/2)*DY;y=yc+(y-yc)*(1-0.55*S.d3*g);r=rad*(1+0.28*S.d3*g);}
+  else{r=rad*(1+0.10*S.d3*g);}
+  if(s===1&&i>I2){var k=S.d1*Math.max(0,1-(i-I2-1)*0.3);r=rad*(1+0.30*k);y+=0.15*k+Math.sin(T*3+i*1.7)*0.02*k;th+=0.30*k;}
+  return out.set(r*Math.cos(th),y,r*Math.sin(th));
+}
+var _m=new THREE.Matrix4(),_q=new THREE.Quaternion(),_p=new THREE.Vector3(),_s=new THREE.Vector3(),_d=new THREE.Vector3(),UP=new THREE.Vector3(0,1,0);
+function setCyl(mesh,idx,a,b,thick){_d.subVectors(b,a);var len=_d.length();
+  if(len<1e-5||thick<0.03){_m.makeScale(0,0,0);mesh.setMatrixAt(idx,_m);return;}
+  _d.divideScalar(len);_q.setFromUnitVectors(UP,_d);_p.addVectors(a,b).multiplyScalar(0.5);_s.set(thick,len,thick);_m.compose(_p,_q,_s);mesh.setMatrixAt(idx,_m);}
+var mutCol0=new THREE.Color(),mutCol1=new THREE.Color();
+
+/* photons UV sur l'ADN */
+var PN3=34;
+function mkStream(){var arr=new Float32Array(PN3*3);var p=makePoints(arr,0.12,0xb388ff,0);p.userData.noFade=true;p.userData.arr=arr;dnaGroup.add(p);return p;}
+var streams=[mkStream(),mkStream(),mkStream()];
+var PHI_BREAK=0.18,PHI_MUT=3.24,PHI_DIM=5.97;
+function rotY(v,phi,out){var c=Math.cos(phi),s=Math.sin(phi);return out.set(v.x*c+v.z*s,v.y,-v.x*s+v.z*c);}
+var tgt=[new THREE.Vector3(),new THREE.Vector3(),new THREE.Vector3()],tmpV=new THREE.Vector3(),srcV=new THREE.Vector3(),dirV=new THREE.Vector3(),perpV=new THREE.Vector3();
+
+/* cellule : membrane qui se dégrade */
+var cellMat=new THREE.ShaderMaterial({uniforms:{uTime:{value:0},uDmg:{value:0},uColor:{value:new THREE.Color(0x63e6ff)},uAlpha:{value:1},uOpacity:{value:0}},
+  vertexShader:'uniform float uTime,uDmg;varying vec3 vN;varying vec3 vV;void main(){vec3 p=position;float w=sin(p.x*3.1+uTime*1.3)*sin(p.y*2.7+uTime*1.1)*sin(p.z*3.3+uTime*0.9);p+=normal*w*(0.03+0.14*uDmg);vN=normalize(normalMatrix*normal);vec4 mv=modelViewMatrix*vec4(p,1.0);vV=normalize(-mv.xyz);gl_Position=projectionMatrix*mv;}',
+  fragmentShader:'uniform vec3 uColor;uniform float uOpacity,uAlpha;varying vec3 vN;varying vec3 vV;void main(){float f=pow(1.0-abs(dot(vN,vV)),2.4);gl_FragColor=vec4(uColor,(f*0.9+0.04)*uAlpha*uOpacity);}',
+  transparent:true,depthWrite:false,blending:THREE.AdditiveBlending,side:THREE.FrontSide});
+var cell=new THREE.Mesh(new THREE.SphereGeometry(2.4,64,48),cellMat);dnaGroup.add(cell);
+cell.renderOrder=0;
+bbB.renderOrder=1;
+rungs.renderOrder=2;
+bbS.renderOrder=3;
+bridge.renderOrder=4;
+[gBreak,gMut,gDim].forEach(function(s){s.renderOrder=5;});
+streams.forEach(function(s){s.renderOrder=6;});
+var CY=new THREE.Color(0x63e6ff),CR=new THREE.Color(0xff4a4a);
+
+function updateDNA(){
+  var f=S.dna;dnaGroup.visible=f>0.004;
+  if(!dnaGroup.visible)return;
+dnaGroup.scale.setScalar(stageK*0.85*(0.9+0.1*f));
+[bbS,bbB,rungs].forEach(function(m){m.material.color.setScalar(f);});
+  helix.rotation.y=S.dphi;
+  for(var i=0;i<N;i++){pt(0,i,RAD,P0[i]);pt(1,i,RAD,P1[i]);pt(0,i,0.05,Q0[i]);pt(1,i,0.05,Q1[i]);pt(0,i,0.3,BM0[i]);}
+  var pop=1+0.7*Math.sin(PI*clamp(S.d2));
+  for(var a=0;a<N;a++){
+    _m.makeTranslation(P0[a].x,P0[a].y,P0[a].z);bbS.setMatrixAt(a,_m);
+    _m.makeTranslation(P1[a].x,P1[a].y,P1[a].z);bbS.setMatrixAt(N+a,_m);
+    var th=a===I3?pop:1;setCyl(rungs,2*a,P0[a],Q0[a],th);setCyl(rungs,2*a+1,P1[a],Q1[a],th);
+    if(a<N-1){setCyl(bbB,a,P0[a],P0[a+1],1);setCyl(bbB,N-1+a,P1[a],P1[a+1],a===I2?1-sstep(0.15,0.35,S.d1):1);}
+  }
+  var mm=ease(seg(S.d2,0.45,0.75));
+  mutCol0.copy(BASECOL[s0[I3]]).lerp(BASECOL.G,mm);mutCol1.copy(BASECOL[s1[I3]]).lerp(BASECOL.C,mm);
+  rungs.setColorAt(2*I3,mutCol0);rungs.setColorAt(2*I3+1,mutCol1);
+  bbS.instanceMatrix.needsUpdate=bbB.instanceMatrix.needsUpdate=rungs.instanceMatrix.needsUpdate=true;rungs.instanceColor.needsUpdate=true;
+  /* dimère de thymine : liaison entre les deux T voisines */
+  var bA=BM0[I0],bB=BM0[I0+1];_d.subVectors(bB,bA);var bl=_d.length();
+  if(bl>1e-5){_d.divideScalar(bl);bridge.quaternion.setFromUnitVectors(UP,_d);bridge.position.addVectors(bA,bB).multiplyScalar(0.5);bridge.scale.set(1,bl,1);}
+  bridge.material.opacity=sstep(0.3,0.6,S.d3)*f;
+  var bump=function(d){return d*(0.35+0.65*Math.sin(PI*Math.min(d,1)));};
+  gBreak.position.copy(P1[I2]).lerp(P1[I2+1],0.5);gBreak.material.opacity=bump(S.d1)*0.9*f;
+  gMut.position.set(0,P0[I3].y,0);gMut.material.opacity=bump(S.d2)*0.9*f;
+  gDim.position.copy(bA).lerp(bB,0.5);gDim.material.opacity=bump(S.d3)*0.9*f;
+  /* cibles des photons (repère du groupe) */
+  tmpV.copy(P1[I2]).lerp(P1[I2+1],0.5);rotY(tmpV,S.dphi,tgt[0]);
+  tmpV.set(0,P0[I3].y,0);rotY(tmpV,S.dphi,tgt[1]);
+  tmpV.copy(bA).lerp(bB,0.5);rotY(tmpV,S.dphi,tgt[2]);
+  var ds=[S.d1,S.d2,S.d3];
+  for(var k=0;k<3;k++){
+    var op=clamp(Math.min(ds[k]*7,(1-ds[k])*7))*f;streams[k].material.opacity=op;streams[k].visible=op>0.01;
+    if(op<=0.01)continue;
+    srcV.copy(tgt[k]).add(_p.set(-2.6,1.5,0.8));dirV.subVectors(tgt[k],srcV);var len=dirV.length();dirV.divideScalar(len);
+    perpV.set(-dirV.y,dirV.x,0);var arr=streams[k].userData.arr;
+    for(var j=0;j<PN3;j++){var u=((T*0.7+j/PN3)%1),s=u*len,w=Math.sin(s*15-T*10)*0.07;
+      arr[j*3]=srcV.x+dirV.x*s+perpV.x*w;arr[j*3+1]=srcV.y+dirV.y*s+perpV.y*w;arr[j*3+2]=srcV.z+dirV.z*s;}
+    streams[k].geometry.attributes.position.needsUpdate=true;
+  }
+  /* cellule */
+  cellMat.uniforms.uTime.value=T;cellMat.uniforms.uDmg.value=S.cell;
+  cellMat.uniforms.uColor.value.copy(CY).lerp(CR,S.cell);
+  cellMat.uniforms.uAlpha.value=1-0.6*sstep(0.8,1,S.cell);cellMat.uniforms.uOpacity.value=f;
+}
+function dl(getP,off){return function(v){dnaGroup.localToWorld(v.copy(getP()).add(off));};}
+var off1=new THREE.Vector3(0.55,0.2,0);
+addLabel('Cassure d\u2019ADN','warn',dl(function(){return tgt[0];},off1),function(){return S.dna*sstep(0.05,0.3,S.d1)*(1-sstep(0,0.2,S.d2));});
+addLabel('Mutation d\u2019un nucléotide','warn',dl(function(){return tgt[1];},off1),function(){return S.dna*sstep(0.05,0.3,S.d2)*(1-sstep(0,0.2,S.d3));});
+addLabel('Dimère de thymine T\u2013T','warn',dl(function(){return tgt[2];},off1),function(){return S.dna*sstep(0.05,0.3,S.d3);});
+
+/* ---------- océan (étape 5) ---------- */
+var seaGroup=new THREE.Group();camera.add(seaGroup);seaGroup.position.set(0,0,-6);
+var seaStage=new THREE.Group();seaGroup.add(seaStage);
+var SURF=1.9,K=0.4,OZY=SURF+2.15;
+var seaStatic=new THREE.Group();seaStage.add(seaStatic);
+var waterGeo=new THREE.PlaneGeometry(18,14);waterGeo.translate(0,SURF-7,-0.6);
+var waterMat=new THREE.ShaderMaterial({uniforms:{uOpacity:{value:1},uSurf:{value:SURF},uK:{value:K},uTime:{value:0}},
+  vertexShader:'varying vec3 vP;void main(){vP=position;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0);}',
+  fragmentShader:'uniform float uOpacity,uSurf,uK,uTime;varying vec3 vP;void main(){float dep=(uSurf-vP.y)/uK;'+
+  'vec3 top=vec3(0.10,0.52,0.72);vec3 mid=vec3(0.03,0.22,0.45);vec3 bot=vec3(0.01,0.06,0.16);'+
+  'vec3 c=mix(mix(top,mid,smoothstep(0.0,6.0,dep)),bot,smoothstep(4.0,16.0,dep));'+
+  'float caus=0.5+0.5*sin(vP.x*5.0+uTime*0.8)*sin(vP.y*7.0-uTime*0.6);c+=vec3(0.05,0.12,0.15)*caus*(1.0-smoothstep(0.0,7.0,dep));'+
+  'gl_FragColor=vec4(c,uOpacity);}',transparent:true,depthWrite:false});
+var water=new THREE.Mesh(waterGeo,waterMat);water.renderOrder=-3;seaStatic.add(water);
+/* rayons de lumière visible */
+var shaftMat=function(ph){return new THREE.ShaderMaterial({uniforms:{uOpacity:{value:1},uTime:{value:0},uPh:{value:ph}},
+  vertexShader:'varying vec2 vUv;void main(){vUv=uv;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0);}',
+  fragmentShader:'uniform float uOpacity,uTime,uPh;varying vec2 vUv;void main(){float a=smoothstep(0.0,0.5,vUv.x)*smoothstep(1.0,0.5,vUv.x);a*=pow(vUv.y,1.5)*0.17*(0.7+0.3*sin(uTime*0.6+uPh));gl_FragColor=vec4(0.55,0.85,1.0,a*uOpacity);}',
+  transparent:true,depthWrite:false,blending:THREE.AdditiveBlending,side:THREE.DoubleSide});};
+var shafts=[];
+for(var sh=0;sh<6;sh++){var smat=shaftMat(sh*1.7);var sm=new THREE.Mesh(new THREE.PlaneGeometry(0.9,6.5),smat);sm.position.set(-1.6+sh*0.85,SURF-3.2,-0.3);sm.rotation.z=-0.18;sm.renderOrder=-2;seaStatic.add(sm);shafts.push(smat);}
+/* surface */
+var surfN=120,surfArr=new Float32Array(surfN*3);
+var surfGeo=new THREE.BufferGeometry();surfGeo.setAttribute('position',new THREE.BufferAttribute(surfArr,3));
+var surfLine=new THREE.Line(surfGeo,new THREE.LineBasicMaterial({color:0xcaf3ff,transparent:true,opacity:0.9}));surfLine.frustumCulled=false;seaStatic.add(surfLine);
+/* règle de profondeur */
+var ruler=new THREE.Group();seaStage.add(ruler);
+(function(){var pts=[],RX=-1.35;
+  pts.push(RX,SURF,0,RX,SURF-4.4,0);
+  for(var m=0;m<=11;m++){var y=SURF-m*K,len=(m%5===0)?0.16:0.08;pts.push(RX,y,0,RX+len,y,0);}
+  var g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.BufferAttribute(new Float32Array(pts),3));
+  ruler.add(new THREE.LineSegments(g,new THREE.LineBasicMaterial({color:0xbfe6ff,transparent:true,opacity:0.7})));
+  [0,5,10].forEach(function(m){var s=textSprite(m+' m','#cfe7ff');s.position.set(RX+0.22,SURF-m*K,0);ruler.add(s);});
+  var dg=new THREE.BufferGeometry();dg.setAttribute('position',new THREE.BufferAttribute(new Float32Array([RX,SURF-5*K,0,2.5,SURF-5*K,0]),3));
+  var dl5=new THREE.Line(dg,new THREE.LineDashedMaterial({color:0xffb454,dashSize:0.1,gapSize:0.07,transparent:true,opacity:0.95}));dl5.computeLineDistances();ruler.add(dl5);
+})();
+/* rayons UV : absorbés à 5 m, puis bloqués par l'ozone */
+var rays=[];
+for(var ri=0;ri<9;ri++){
+  var cy=SURF-0.5,rw=0.10+rand()*0.07;
+  var rmat=new THREE.ShaderMaterial({uniforms:{uColor:{value:new THREE.Color(0xa56bff)},uTime:{value:0},uKill:{value:SURF-5*K},uOpacity:{value:0},uGain:{value:1},uPh:{value:rand()*6},uCY:{value:cy}},
+    vertexShader:'uniform float uCY;varying vec2 vUv;varying float vY;void main(){vUv=uv;vY=position.y+uCY;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0);}',
+    fragmentShader:'uniform vec3 uColor;uniform float uTime,uKill,uOpacity,uGain,uPh;varying vec2 vUv;varying float vY;void main(){float edge=pow(clamp(1.0-abs(vUv.x-0.5)*2.0,0.0,1.0),1.5);float fade=smoothstep(uKill-0.02,uKill+0.9,vY);float st=0.6+0.4*sin(vY*14.0-uTime*6.0+uPh);gl_FragColor=vec4(uColor*(0.8+edge*0.6),edge*fade*st*uGain*uOpacity);}',
+    transparent:true,depthWrite:false,blending:THREE.AdditiveBlending,side:THREE.DoubleSide});
+  var rm=new THREE.Mesh(new THREE.PlaneGeometry(rw,7),rmat);rm.position.set(-1.0+ri*0.41,cy,0.1);rm.frustumCulled=false;seaStage.add(rm);rays.push(rmat);
+}
+/* bande d'ozone qui se forme au-dessus */
+var bandMat=new THREE.ShaderMaterial({uniforms:{uTime:{value:0},uOpacity:{value:0}},
+  vertexShader:'varying vec2 vUv;void main(){vUv=uv;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0);}',
+  fragmentShader:'uniform float uTime,uOpacity;varying vec2 vUv;void main(){float a=smoothstep(0.0,0.5,vUv.y)*smoothstep(1.0,0.5,vUv.y);a=pow(a,1.5)*0.55*(0.85+0.15*sin(vUv.x*24.0+uTime*1.3));gl_FragColor=vec4(0.37,0.86,1.0,a*uOpacity);}',
+  transparent:true,depthWrite:false,blending:THREE.AdditiveBlending});
+var band=new THREE.Mesh(new THREE.PlaneGeometry(14,1.1),bandMat);band.position.set(0,OZY,0.05);band.frustumCulled=false;seaStage.add(band);
+var OZN=900,oz0=new Float32Array(OZN*3),oz1=new Float32Array(OZN*3),ozPos=new Float32Array(OZN*3);
+for(var oi=0;oi<OZN;oi++){oz0[oi*3]=-5+rand()*10;oz0[oi*3+1]=SURF+0.5+rand()*4.2;oz0[oi*3+2]=rand()*0.4;
+  oz1[oi*3]=-5+rand()*10;oz1[oi*3+1]=OZY+(rand()-0.5)*0.5;oz1[oi*3+2]=rand()*0.4;}
+var ozPts=makePoints(ozPos,0.09,0x7fe6ff,0);seaStage.add(ozPts);
+/* cellules primitives */
+var cells=[],cellGeo=new THREE.SphereGeometry(1,20,20);
+var LIVE=new THREE.Color(0x66ffd6),DEAD=new THREE.Color(0xff5a5a);
+for(var ci=0;ci<18;ci++){
+  var exposed=ci<9,depth=exposed?(0.8+rand()*3.3):(6+rand()*4.5),cr=0.11+rand()*0.09;
+  var cg=new THREE.Group();
+  var mem=new THREE.Mesh(cellGeo,new THREE.MeshBasicMaterial({color:0x66ffd6,transparent:true,opacity:0.3,depthWrite:false}));
+  var nuc=new THREE.Mesh(cellGeo,new THREE.MeshBasicMaterial({color:0xd6fff5,transparent:true,opacity:0.85,depthWrite:false}));nuc.scale.setScalar(0.38);
+  cg.add(mem);cg.add(nuc);cg.position.z=0.2;seaStage.add(cg);
+  cells.push({g:cg,mem:mem,nuc:nuc,exposed:exposed,depth:depth,r:cr,x:-0.9+(ci%9)*0.4+(rand()-0.5)*0.15,ph:rand()*6.28,i:ci});
+}
+/* plancton */
+var BN=140,bubArr=new Float32Array(BN*3);
+for(var bi=0;bi<BN;bi++){bubArr[bi*3]=-2+rand()*4.6;bubArr[bi*3+1]=SURF-4.4+rand()*4.2;bubArr[bi*3+2]=rand()*0.3;}
+var bubbles=makePoints(bubArr,0.05,0xbfeaff,0);seaStage.add(bubbles);
+/* continent */
+var landG=new THREE.Group();seaStage.add(landG);
+var LP=[[-1.2,-3.5],[-0.8,-2],[-0.2,-0.9],[0.3,-0.35],[0.8,-0.05],[1.3,0.12],[1.9,0.28],[2.6,0.36],[3.4,0.4],[5,0.44],[8,0.46]];
+var lshape=new THREE.Shape();
+new THREE.SplineCurve(LP.map(function(p){return new THREE.Vector2(p[0],p[1]);})).getPoints(80).forEach(function(p,i){if(i===0)lshape.moveTo(p.x,p.y);else lshape.lineTo(p.x,p.y);});
+lshape.lineTo(8,-9);lshape.lineTo(-1.2,-9);
+var landMat=new THREE.MeshBasicMaterial({color:0x2d3a22,transparent:true,opacity:0});
+var landMesh=new THREE.Mesh(new THREE.ShapeGeometry(lshape),landMat);landG.add(landMesh);
+var PLN=140,plArr=new Float32Array(PLN*3),plCol=new Float32Array(PLN*3),plX=new Float32Array(PLN);
+for(var pi=0;pi<PLN;pi++){var px=-0.1+rand()*3.1,py=0;
+  for(var e=0;e<LP.length-1;e++){if(px>=LP[e][0]&&px<=LP[e+1][0]){py=mix(LP[e][1],LP[e+1][1],(px-LP[e][0])/(LP[e+1][0]-LP[e][0]));break;}}
+  plX[pi]=px;plArr[pi*3]=px;plArr[pi*3+1]=py+0.03+rand()*0.09;plArr[pi*3+2]=0.02;}
+var plants=makePoints(plArr,0.09,0xffffff,0);
+plants.geometry.setAttribute('color',new THREE.BufferAttribute(plCol,3));
+plants.material.vertexColors=true;plants.material.needsUpdate=true;
+landG.add(plants);
+var LCN=11,landCells=[];
+for(var lci=0;lci<LCN;lci++){
+  var lpx=0.05+rand()*2.95,lpy=0;
+  for(var le=0;le<LP.length-1;le++){if(lpx>=LP[le][0]&&lpx<=LP[le+1][0]){lpy=mix(LP[le][1],LP[le+1][1],(lpx-LP[le][0])/(LP[le+1][0]-LP[le][0]));break;}}
+  var lcg=new THREE.Group();
+  var lmem=new THREE.Mesh(cellGeo,new THREE.MeshBasicMaterial({color:0x66ffd6,transparent:true,opacity:0.3,depthWrite:false}));
+  var lnuc=new THREE.Mesh(cellGeo,new THREE.MeshBasicMaterial({color:0xd6fff5,transparent:true,opacity:0.85,depthWrite:false}));lnuc.scale.setScalar(0.38);
+  lcg.add(lmem);lcg.add(lnuc);lcg.position.set(lpx,lpy+0.09+rand()*0.06,0.25);
+  var lbase=0.09+rand()*0.08;lcg.scale.setScalar(lbase);
+  landG.add(lcg);
+  landCells.push({g:lcg,mem:lmem,nuc:lnuc,base:lbase,ph:rand()*6.28,x:lpx});
+}
+addLabel('Plus d\u2019UV sous 5 m','warn',function(v){seaStage.localToWorld(v.set(1.75,SURF-5*K+0.05,0.2));},function(){return S.sea*(1-S.ozoneForm)*sstep(0.6,1,S.rayGain);});
+addLabel('Couche d\u2019ozone','oz',function(v){seaStage.localToWorld(v.set(1.6,OZY+0.3,0.2));},function(){return S.sea*sstep(0.8,1,S.ozoneForm);});
+
+function updateSea(dt){
+  var f=S.sea;seaGroup.visible=f>0.004;
+  if(!seaGroup.visible){setFade(seaStatic,0);return;}
+  seaGroup.scale.setScalar(stageK);seaStage.position.y=S.seaY;
+  setFade(seaStatic,f);setFade(ruler,(1-S.ozoneForm)*f);
+  waterMat.uniforms.uTime.value=T;shafts.forEach(function(m){m.uniforms.uTime.value=T;});
+  for(var i=0;i<surfN;i++){var x=-6+i*(12/(surfN-1));surfArr[i*3]=x;surfArr[i*3+1]=SURF+Math.sin(x*3+T*1.2)*0.03+Math.sin(x*7-T*1.7)*0.015;surfArr[i*3+2]=0;}
+  surfGeo.attributes.position.needsUpdate=true;
+  var kill=mix(SURF-5*K,OZY,S.ozoneForm);
+  rays.forEach(function(m){m.uniforms.uTime.value=T;m.uniforms.uKill.value=kill;m.uniforms.uOpacity.value=S.rayGain*f;});
+  bandMat.uniforms.uTime.value=T;bandMat.uniforms.uOpacity.value=S.ozoneForm*f;
+  var e=ease(S.ozoneForm);
+  for(var j=0;j<OZN;j++){var a=j*3;ozPos[a]=mix(oz0[a],oz1[a],e)+Math.sin(T*0.6+j)*0.03;ozPos[a+1]=mix(oz0[a+1],oz1[a+1],e)+Math.cos(T*0.5+j*1.3)*0.03;ozPos[a+2]=oz0[a+2];}
+  ozPts.geometry.attributes.position.needsUpdate=true;ozPts.material.opacity=sstep(0,0.15,S.ozoneForm)*(0.35+0.65*e)*f;
+  var rise=ease(seg(S.ozoneForm,0.5,1));
+  cells.forEach(function(c){
+    var health=c.exposed?ease(seg(S.ozoneForm,0.2,0.85)):1;
+    var y0=SURF-c.depth*K+Math.sin(T*0.4+c.ph)*0.07;
+    var yF=SURF-(0.5+(c.i%5)*0.35)*K*2.2;
+    var y=c.exposed?y0:mix(y0,yF,rise);
+    c.g.position.set(c.x+Math.sin(T*0.3+c.ph)*0.14,y,0.2);
+    c.g.scale.setScalar(c.r*(0.8+0.2*health)*(1+0.03*Math.sin(T*2+c.ph)));
+    var col=DEAD.clone().lerp(LIVE,health);c.mem.material.color.copy(col);
+    var fl=1-0.5*(1-health)*(0.5+0.5*Math.sin(T*23+c.ph*9));
+    c.mem.material.opacity=(0.22+0.18*health)*fl*f;c.nuc.material.opacity=(0.4+0.5*health)*fl*f;
+  });
+  for(var b=0;b<BN;b++){bubArr[b*3+1]+=dt*0.03;if(bubArr[b*3+1]>SURF-0.15)bubArr[b*3+1]=SURF-4.4;}
+  bubbles.geometry.attributes.position.needsUpdate=true;bubbles.material.opacity=0.6*f;
+  var L=S.land;landG.position.y=SURF+(1-L)*-0.9;landMat.opacity=L*0.95*f;
+plants.material.opacity=f;plants.material.size=0.09;
+var lcOn=sstep(0.3,0.85,L);
+landCells.forEach(function(c){
+  var s=c.base*(0.55+0.45*lcOn)*(1+0.05*Math.sin(T*2+c.ph));c.g.scale.setScalar(s);
+  var fl=0.85+0.15*Math.sin(T*20+c.ph*7);
+  c.mem.material.opacity=0.3*lcOn*fl*f;c.nuc.material.opacity=0.55*lcOn*fl*f;
+});
+var front=mix(3.2,-0.3,sstep(0.3,1,L));
+for(var q=0;q<PLN;q++){var v=sstep(0,0.5,plX[q]-front);plCol[q*3]=0.48*v;plCol[q*3+1]=0.88*v;plCol[q*3+2]=0.48*v;}
+plants.geometry.attributes.color.needsUpdate=true;
+}
+
+/* ---------- mise à jour de l'espace, de l'ozone et des faisceaux UV ---------- */
+function updateSpace(dt){
+  earth.rotation.y+=dt*0.05;clouds.rotation.y+=dt*0.065;
+  setFade(stars,S.earthFade);setFade(earthGroup,S.earthFade);
+  setFade(ozoneGroup,S.ozone*S.earthFade);
+}
+function updateUV(){
+  var f=S.uv*S.earthFade;uvGroup.visible=f>0.003;if(!uvGroup.visible)return;
+  var heads={};
+  beams.forEach(function(b){var hd=mix(5.6,1.9,S[b.d.k]);heads[b.d.k]=hd;b.mat.uniforms.uTime.value=T;b.mat.uniforms.uHead.value=hd;b.mat.uniforms.uOpacity.value=f;});
+  flares.forEach(function(fl,i){var hd=heads[beamDefs[fl.f.b].k];var arrive=clamp((fl.yc+0.2-hd)/0.35);
+    fl.sp.material.opacity=arrive*(0.6+0.4*Math.sin(T*5+i))*fl.f.g*f;});
+}
+
+/* ---------- caméra, arrière-plan ---------- */
+function applyView(){var ox=mob?0:S.shiftX*W,oy=mob?0.2*H:0;camera.setViewOffset(W,H,ox,oy,W,H);}
+
+/* ---------- timeline pilotée par le scroll ---------- */
+var tl=gsap.timeline({defaults:{ease:'none'},scrollTrigger:{trigger:'#story',start:'top top',end:'bottom bottom',scrub:0.8}});
+tl.to({},{duration:15},0);
+var IO='power2.inOut';
+function track(obj,prop,keys){
+  obj[prop]=keys[0][1];
+  for(var i=0;i<keys.length-1;i++){var t0=keys[i][0],v0=keys[i][1],t1=keys[i+1][0],v1=keys[i+1][1],ez=keys[i+1][2]||'none';
+    if(t1<=t0||v0===v1)continue;var from={},to={};from[prop]=v0;to[prop]=v1;to.duration=t1-t0;to.ease=ez;to.immediateRender=false;
+    tl.fromTo(obj,from,to,t0);}
+}
+track(S.cp,'y',[[0,0.5],[1,0.35],[2,2.9,IO],[5,2.75],[6,2.45,IO],[8,2.4],[9,2.15,IO],[11,2.15],[12,0,IO]]);
+track(S.cp,'z',[[0,9.6],[1,8.7],[2,5.2,IO],[5,5.0],[6,3.6,IO],[8,3.4],[9,1.9,IO],[11,1.9],[12,8,IO]]);
+track(S.cl,'y',[[0,0],[1,0],[2,2.6,IO],[5,2.55],[6,2.3,IO],[8,2.3],[9,1.9,IO],[11,1.9],[12,0,IO]]);
+track(S,'shiftX',[[0,-0.17],[1,-0.17],[2,0.17,IO],[5,0.17],[6,-0.17,IO],[8,-0.17],[9,0.17,IO],[11,0.17],[12,-0.17,IO]]);
+track(S,'earthFade',[[0,1],[8.4,1],[9.2,0]]);
+track(S,'mol',[[0,0],[2,0],[2.25,1],[5,1],[5.6,0]]);
+track(S,'molP',[[0,0],[2.3,0],[4.7,1]]);
+track(S,'ozone',[[0,0],[3.4,0],[4.6,1]]);
+track(S,'uv',[[0,0],[5.4,0],[6,1],[8.2,1],[8.8,0]]);
+track(S,'uvC',[[0,0],[6.1,0],[6.9,1]]);
+track(S,'uvB',[[0,0],[6.8,0],[7.5,1]]);
+track(S,'uvA',[[0,0],[7.4,0],[8.0,1]]);
+track(S,'dna',[[0,0],[8.7,0],[9.4,1],[11.0,1],[11.7,0]]);
+track(S,'dphi',[[0,-0.9],[9.2,-0.9],[9.5,PHI_BREAK,IO],[9.85,PHI_BREAK],[10.05,PHI_MUT,IO],[10.4,PHI_MUT],[10.6,PHI_DIM,IO]]);
+track(S,'d1',[[0,0],[9.5,0],[9.85,1]]);
+track(S,'d2',[[0,0],[10.05,0],[10.4,1]]);
+track(S,'d3',[[0,0],[10.6,0],[10.95,1]]);
+track(S,'cell',[[0,0],[9.5,0],[11.3,1]]);
+track(S,'b4',[[0,0],[8.4,0],[9.3,1]]);
+track(S,'b5',[[0,0],[11.6,0],[12.4,1]]);
+track(S,'sea',[[0,0],[11.6,0],[12.4,1]]);
+track(S,'rayGain',[[0,0],[12.0,0],[12.7,1]]);
+track(S,'seaY',[[0,0],[13.3,0],[14.1,-2.45,IO]]);
+track(S,'ozoneForm',[[0,0],[13.4,0],[14.4,1,'power1.inOut']]);
+track(S,'land',[[0,0],[13.0,0],[13.9,1]]);
+track(S,'txtStage',[[0,0],[12,0],[13,1],[14,2],[15,3]]);
+track(S,'frise',[[0,17.4],[13.3,17.4],[14.3,87,'power1.inOut'],[15,100]]);
+
+/* ---------- interface : panneaux, navigation, légendes ---------- */
+var $=function(s){return document.querySelector(s);},$$=function(s){return Array.prototype.slice.call(document.querySelectorAll(s));};
+var panels=[1,2,3,4,5].map(function(n){return document.getElementById('p'+n);});
+var HOLD=[[0,1],[2,5],[6,8],[9,11],[12,15]];
+var ACC=['#6cb4ff','#ff7b6b','#b58cff','#ff7ab8','#4fe0d6'];
+var WHERE=['Vue depuis l\u2019espace','Stratosphère, 10 à 55 km','Couche d\u2019ozone, 20 à 30 km','Surface, à l\u2019échelle de la cellule','Océan, de 0 à 10 m de profondeur'];
+var dotsNav=$('#dots');
+[0,1,2,3,4].forEach(function(i){var b=document.createElement('button');b.setAttribute('aria-label','Aller à l\u2019étape '+(i+1));
+  b.addEventListener('click',function(){window.scrollTo({top:(HOLD[i][0]+0.03)*H,behavior:'smooth'});});dotsNav.appendChild(b);});
+var dotEls=$$('#dots button');
+var story=document.getElementById('story'),bar=document.getElementById('bar'),whereNum=$('#whereNum'),whereTxt=$('#whereTxt');
+var curStep=-1;
+function updateScrollUI(){
+  var s=window.scrollY/H,maxS=Math.max(1,story.offsetHeight-H);
+  bar.style.transform='scaleX('+clamp(window.scrollY/maxS).toFixed(4)+')';
+  for(var k=0;k<5;k++){
+    var a=HOLD[k][0],b=HOLD[k][1];
+    var inn=k===0?1:sstep(a-0.8,a-0.15,s),out=k===4?1:1-sstep(b+0.02,b+0.55,s);
+    var op=inn*out;panels[k].style.opacity=op.toFixed(3);
+    panels[k].style.transform='translateY('+((1-inn)*24-(1-out)*24).toFixed(1)+'px)';
+    panels[k].style.pointerEvents=op<0.05?'none':'auto';
+  }
+  var st=s<1.5?0:s<5.5?1:s<8.5?2:s<11.5?3:4;
+  if(st!==curStep){curStep=st;root.style.setProperty('--accent',ACC[st]);
+    whereNum.textContent='Étape '+(st+1)+' sur 5';whereTxt.textContent=WHERE[st];
+    dotEls.forEach(function(d,i){d.classList.toggle('on',i===st);});}
+}
+var molSteps=$$('#molSteps li'),molEq=$('#molEq'),molCap=$('#molCap');
+var CAPS=['Un rayonnement UV du Soleil arrive sur une molécule de dioxygène (O<sub>2</sub>)',
+ 'Photolyse : la molécule absorbe l\u2019énergie de l\u2019UV et se sépare en deux atomes d\u2019oxygène (O)',
+ 'Chaque atome O rencontre une autre molécule O<sub>2</sub> et s\u2019y fixe : O + O<sub>2</sub> → O<sub>3</sub>.',
+ 'Deux molécules d\u2019ozone (O<sub>3</sub>) sont formées.'];
+var EQS=['O<sub>2</sub> + UV → O + O','O<sub>2</sub> + UV → O + O','O + O<sub>2</sub> → O<sub>3</sub>','O + O<sub>2</sub> → O<sub>3</sub>'];
+var uvRows=$$('#uvRows li'),lesions=$$('#lesions li'),blocks=[$('#b1'),$('#b2'),$('#b3')],frise=$('#frise'),pt1=$('.p1'),pt2=$('.p2');
+var lastMol=-1,lastBlk=-1;
+function updateDOM(){
+  var p=S.molP,idx=p<0.25?0:p<0.45?1:p<0.8?2:3;
+  if(idx!==lastMol){lastMol=idx;molSteps.forEach(function(li,i){li.classList.toggle('on',i===idx);});molEq.innerHTML=EQS[idx];molCap.innerHTML=CAPS[idx];}
+  uvRows[0].classList.toggle('on',S.uvC>0.02);uvRows[1].classList.toggle('on',S.uvB>0.02);uvRows[2].classList.toggle('on',S.uvA>0.02);
+  lesions[0].classList.toggle('on',S.d1>0.02);lesions[1].classList.toggle('on',S.d2>0.02);lesions[2].classList.toggle('on',S.d3>0.02);
+  var bk=S.txtStage<1?0:(S.txtStage<2?1:2);
+  if(bk!==lastBlk){lastBlk=bk;blocks.forEach(function(b,i){b.classList.toggle('on',i===bk);});}
+  frise.style.setProperty('--p',S.frise.toFixed(1)+'%');
+  pt1.classList.toggle('on',S.frise>=17);pt2.classList.toggle('on',S.frise>=86);
+}
+
+/* ---------- schémas des documents 2 et 4 (redessinés) ---------- */
+function smoothPath(pts){var d='M'+pts[0][0].toFixed(1)+','+pts[0][1].toFixed(1);
+  for(var i=0;i<pts.length-1;i++){var p0=pts[i-1]||pts[i],p1=pts[i],p2=pts[i+1],p3=pts[i+2]||p2;
+    d+=' C'+(p1[0]+(p2[0]-p0[0])/6).toFixed(1)+','+(p1[1]+(p2[1]-p0[1])/6).toFixed(1)+' '+(p2[0]-(p3[0]-p1[0])/6).toFixed(1)+','+(p2[1]-(p3[1]-p1[1])/6).toFixed(1)+' '+p2[0].toFixed(1)+','+p2[1].toFixed(1);}
+  return d;}
+function buildDoc2(){
+  var svg=document.getElementById('doc2'),Y=function(a){return 214-a*2.857;},h='';
+  h+='<rect x="34" y="'+Y(30)+'" width="276" height="'+(Y(20)-Y(30))+'" fill="rgba(95,220,255,.16)"/>';
+  h+='<line x1="34" x2="310" y1="'+Y(55)+'" y2="'+Y(55)+'" stroke="rgba(255,140,150,.8)" stroke-dasharray="4 3" stroke-width=".8"/><text x="38" y="'+(Y(55)-3)+'" font-size="8" fill="#ffb0b8">Stratopause</text>';
+  h+='<line x1="34" x2="310" y1="'+Y(10)+'" y2="'+Y(10)+'" stroke="rgba(255,140,150,.8)" stroke-dasharray="4 3" stroke-width=".8"/><text x="38" y="'+(Y(10)-3)+'" font-size="8" fill="#ffb0b8">Tropopause</text>';
+  h+='<text x="38" y="'+(Y(25)+3)+'" font-size="8.5" fill="#8fe8ff">Couche d\u2019ozone</text>';
+  h+='<line x1="34" x2="310" y1="214" y2="214" stroke="rgba(255,255,255,.5)"/><line x1="34" x2="34" y1="'+Y(70)+'" y2="214" stroke="rgba(255,255,255,.5)"/>';
+  [0,20,40,60].forEach(function(a){h+='<text x="30" y="'+(Y(a)+3)+'" font-size="8" fill="#aab4d8" text-anchor="end">'+a+'</text>';});
+  h+='<text x="8" y="120" font-size="8" fill="#aab4d8" transform="rotate(-90 8 120)" text-anchor="middle">Altitude (km)</text>';
+  var cols=[{x:195,c:'#7a35ff',l:'UV-C',r:'0 %',f:function(a){return sstep(28,38,a);}},{x:242,c:'#a56bff',l:'UV-B',r:'5 %',f:function(a){return 0.05+0.95*sstep(10,34,a);}},{x:289,c:'#dcc6ff',l:'UV-A',r:'95 %',f:function(a){return 0.95+0.05*sstep(12,32,a);}}];
+  cols.forEach(function(c){var L=[],R=[];
+    for(var a=70;a>=0;a-=2){var w=15*c.f(a);L.push((c.x-w).toFixed(1)+','+Y(a).toFixed(1));R.unshift((c.x+w).toFixed(1)+','+Y(a).toFixed(1));}
+    h+='<polygon points="'+L.concat(R).join(' ')+'" fill="'+c.c+'" opacity=".85"/>';
+    h+='<text x="'+c.x+'" y="10" font-size="9" fill="'+c.c+'" text-anchor="middle" font-weight="600">'+c.l+'</text>';
+    h+='<text x="'+c.x+'" y="232" font-size="9.5" fill="#eef2ff" text-anchor="middle" font-weight="600">'+c.r+'</text>';});
+  h+='<text x="242" y="243" font-size="6.5" fill="#aab4d8" text-anchor="middle">du rayonnement arrive au sol</text>';
+  var cp=[[0,.10],[2,.12],[5,.10],[9,.14],[13,.35],[17,.7],[21,1],[25,.85],[30,.55],[35,.3],[40,.15],[46,.06],[55,0]].map(function(p){return [40+p[1]*100,Y(p[0])];});
+  h+='<path d="'+smoothPath(cp)+'" fill="none" stroke="#ffd166" stroke-width="2.2" stroke-linecap="round"/>';
+  h+='<text x="146" y="'+(Y(21)+3)+'" font-size="8.5" fill="#ffd166">O<tspan font-size="6" dy="2">3</tspan></text>';
+  svg.innerHTML=h;
+}
+function buildDoc4(){
+  var svg=document.getElementById('doc4'),Y=function(m){return 16+m*2.6;},h='';
+  [0,10,20,30,40,50,60].forEach(function(m){h+='<line x1="38" x2="292" y1="'+Y(m)+'" y2="'+Y(m)+'" stroke="rgba(255,255,255,'+(m===0?.5:.1)+')"/><text x="34" y="'+(Y(m)+3)+'" font-size="8" fill="#aab4d8" text-anchor="end">'+m+'</text>';});
+  h+='<text x="8" y="90" font-size="8" fill="#aab4d8" transform="rotate(-90 8 90)" text-anchor="middle">Profondeur (m)</text>';
+  var bands=[['UV','< 400',5,'#b56cff'],['Violet','400-450',15,'#7c4dff'],['Bleu','450-500',60,'#3d8bfd'],['Vert','500-550',30,'#8ac926'],['Jaune','550-600',15,'#ffd23f'],['Orange','600-650',8,'#ff9f43'],['Rouge','650-700',5,'#ff5a5f']];
+  bands.forEach(function(b,i){var x=40+i*36;
+    h+='<rect x="'+x+'" y="16" width="32" height="'+(Y(b[2])-16)+'" rx="3" fill="'+b[3]+'" opacity="'+(i===0?1:.78)+'"'+(i===0?' stroke="#fff" stroke-width="1.2"':'')+'/>';
+    h+='<text x="'+(x+16)+'" y="184" font-size="8" fill="#eef2ff" text-anchor="middle">'+b[0]+'</text><text x="'+(x+16)+'" y="196" font-size="6.5" fill="#aab4d8" text-anchor="middle">'+b[1]+'</text>';});
+  h+='<line x1="38" x2="296" y1="'+Y(5)+'" y2="'+Y(5)+'" stroke="#ffb454" stroke-dasharray="4 3" stroke-width="1.1"/>';
+  h+='<text x="299" y="'+(Y(5)-2)+'" font-size="8" fill="#ffb454">5 m</text><text x="299" y="'+(Y(5)+9)+'" font-size="7" fill="#ffb454">UV absorbés</text>';
+  h+='<text x="322" y="196" font-size="6.5" fill="#aab4d8" text-anchor="end">nm</text>';
+  svg.innerHTML=h;
+}
+buildDoc2();buildDoc4();
+
+/* ---------- boucle de rendu ---------- */
+var last=performance.now();
+function frame(now){
+  var dt=Math.min(0.05,(now-last)/1000);last=now;T+=dt;
+  updateScrollUI();updateDOM();
+  camera.position.copy(S.cp);camera.lookAt(S.cl);camera.updateMatrixWorld();
+  applyView();
+  scene.background.copy(bgSpace).lerp(bgDna,S.b4).lerp(bgSea,S.b5);
+  updateSpace(dt);updateUV();updateMol();updateDNA();updateSea(dt);
+  renderer.render(scene,camera);
+  updateLabels();
+  requestAnimationFrame(frame);
+}
+requestAnimationFrame(frame);
+ScrollTrigger.refresh();
+var ld=document.getElementById('loader');ld.classList.add('done');setTimeout(function(){ld.style.display='none';},900);
+}
+})();
+</script>
+</body>
+</html>
